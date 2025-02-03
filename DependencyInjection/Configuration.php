@@ -13,8 +13,14 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('assets_version');
 
-        $treeBuilder
-            ->getRootNode()
+        if (method_exists($treeBuilder, 'getRootNode')) {
+            $rootNode = $treeBuilder->getRootNode();
+        } else {
+            // BC layer for symfony/config 4.1 and older
+            $rootNode = $treeBuilder->root('assets_version', 'array');
+        }
+
+        $rootNode
             ->children()
                 ->scalarNode('file_path')
                     ->defaultValue('%kernel.root_dir%/config/parameters.yml')
