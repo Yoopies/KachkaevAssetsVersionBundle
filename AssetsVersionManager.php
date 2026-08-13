@@ -84,7 +84,7 @@ class AssetsVersionManager
 
         if (!$writable) {
             throw new FileException(sprintf(
-                    'Could not write to write "%s"; make sure it exists and you have enough permissions',
+                    'Could not write to file "%s"; make sure it exists and you have enough permissions',
                     $this->filePath
                 ));
         }
