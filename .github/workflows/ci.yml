@@ -1,0 +1,44 @@
+name: CI
+
+on:
+    push:
+        branches: [ master, php8 ]
+    pull_request:
+
+jobs:
+    tests:
+        name: PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                php: [ '8.2', '8.3' ]
+                symfony: [ '5.4.*', '6.4.*' ]
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+                  coverage: none
+                  tools: composer:v2, flex
+
+            - name: Validate composer.json
+              run: composer validate --strict
+
+            - name: Install dependencies
+              env:
+                  # Pins every symfony/* package to the matrix version
+                  SYMFONY_REQUIRE: ${{ matrix.symfony }}
+              run: composer update --prefer-dist --no-progress --no-interaction
+
+            - name: Show resolved Symfony version
+              run: composer show symfony/framework-bundle
+
+            # The file permission tests rely on chmod being enforced,
+            # which is not the case when running as root.
+            - name: Run tests
+              run: vendor/bin/phpunit -c phpunit.xml.dist

@@ -21,14 +21,8 @@ class KachkaevAssetsVersionExtension extends Extension
         $loader->load('config.yml');
         $loader->load('services.yml');
 
-        if (null !== $config['file_path']) {
-            $container->setParameter('kachkaev_assets_version.file_path', $config['file_path']);
-        }
-        if (null !== $config['parameter_name']) {
-            $container->setParameter('kachkaev_assets_version.parameter_name', $config['parameter_name']);
-        }
-        if (null !== $config['manager']) {
-            $container->setParameter('kachkaev_assets_version.manager.class', $config['manager']);
-        }
+        $container->setParameter('kachkaev_assets_version.file_path', $config['file_path']);
+        $container->setParameter('kachkaev_assets_version.parameter_name', $config['parameter_name']);
+        $container->setParameter('kachkaev_assets_version.manager.class', $config['manager']);
     }
 }

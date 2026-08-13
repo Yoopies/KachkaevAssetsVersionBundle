@@ -73,6 +73,22 @@ class AssetsVersionManager
                 ));
         }
 
+        // Checked before mutating the in-memory state so that a failed write
+        // leaves the manager consistent, and raises a FileException rather
+        // than a PHP warning coming out of file_put_contents().
+        // A missing file is not an error: it gets recreated from the contents
+        // held in memory, as long as its directory is writable.
+        $writable = is_file($this->filePath)
+            ? is_writable($this->filePath)
+            : is_writable(dirname($this->filePath));
+
+        if (!$writable) {
+            throw new FileException(sprintf(
+                    'Could not write to write "%s"; make sure it exists and you have enough permissions',
+                    $this->filePath
+                ));
+        }
+
         $this->fileContents = substr_replace(
                 $this->fileContents,
                 $value,
@@ -144,6 +160,15 @@ class AssetsVersionManager
                     'Could not use "%s" - only yml files are supported by AssetsVersionManager',
                     var_export($this->versionValue, true)
                 ));
+
+        // Checked upfront so that an unreadable file raises a FileException
+        // instead of a PHP warning coming out of file_get_contents()
+        if (!is_file($this->filePath) || !is_readable($this->filePath)) {
+            throw new FileException(sprintf(
+                    'Could not read file "%s"; make sure it exists and you have enough permissions',
+                    $this->filePath
+                ));
+        }
 
         $this->fileContents = file_get_contents($this->filePath);
         if ($this->fileContents === false) {
