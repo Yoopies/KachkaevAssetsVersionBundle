@@ -81,9 +81,7 @@ class AssetsVersionManager
             );
         $this->versionValue = $value;
 
-        try {
-            file_put_contents($this->filePath, $this->fileContents);
-        } catch (\Exception $e) {
+        if (file_put_contents($this->filePath, $this->fileContents) === false) {
             throw new FileException(sprintf(
                     'Could not write to write "%s"; make sure it exists and you have enough permissions',
                     $this->filePath
@@ -147,9 +145,8 @@ class AssetsVersionManager
                     var_export($this->versionValue, true)
                 ));
 
-        try {
-            $this->fileContents = file_get_contents($this->filePath);
-        } catch (\Exception $e) {
+        $this->fileContents = file_get_contents($this->filePath);
+        if ($this->fileContents === false) {
             throw new FileException(sprintf(
                     'Could not read file "%s"; make sure it exists and you have enough permissions',
                     $this->filePath

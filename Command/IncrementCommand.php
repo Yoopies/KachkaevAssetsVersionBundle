@@ -42,7 +42,7 @@ class IncrementCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): ?int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Incrementing parameter <info>'.$this->parameterName.'</info> in <info>'.basename($this->filePath).'</info> by <info>'.var_export($input->getArgument('delta'), true).'</info>...');
 
