@@ -16,17 +16,15 @@ class AssetsVersionManagerTest extends TestCase
     protected array $invalidParameterNames = array('assets_version ', '123');
     protected string $fileDir;
 
-    protected ?Filesystem $fileSystem;
+    protected Filesystem $fileSystem;
 
     protected array $templates = [];
     protected array $supportedFileFormats = array('yml');
     protected array $unsupportedFileFormats = array('php', 'xml');
 
-    public function __construct()
+    protected function setUp(): void
     {
-        parent::__construct();
         $this->fileSystem = new Filesystem();
-
         $this->fileDir = sys_get_temp_dir() . '/assets_version_test';
 
         $this->fileSystem->mkdir($this->fileDir);
@@ -34,12 +32,7 @@ class AssetsVersionManagerTest extends TestCase
         $this->loadTemplates();
     }
 
-    public function setUp(): void
-    {
-        $this->fileSystem->mkdir($this->fileDir);
-    }
-
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->fileSystem->remove($this->fileDir);
     }
@@ -55,6 +48,7 @@ class AssetsVersionManagerTest extends TestCase
                     try {
                         $manager = new AssetsVersionManager($filePath, $parameterName);
                     } catch (\InvalidArgumentException $e) {
+                        self::assertInstanceOf(\InvalidArgumentException::class, $e);
                         continue;
                     }
                     self::fail(sprintf(
@@ -127,6 +121,7 @@ class AssetsVersionManagerTest extends TestCase
                             $manager->setVersion($version);
                             self::assertEquals($manager->getVersion(), $version);
                         } catch (\InvalidArgumentException $e) {
+                            self::assertInstanceOf(\InvalidArgumentException::class, $e);
                             continue;
                         }
                         self::fail(
@@ -187,6 +182,7 @@ class AssetsVersionManagerTest extends TestCase
                         try {
                             $manager->incrementVersion();
                         } catch (\UnexpectedValueException $e) {
+                            self::assertInstanceOf(\UnexpectedValueException::class, $e);
                             continue;
                         }
                         self::fail(
@@ -216,11 +212,12 @@ class AssetsVersionManagerTest extends TestCase
                         try {
                             $manager->incrementVersion($increment);
                         } catch (\InvalidArgumentException $e) {
+                            self::assertInstanceOf(\InvalidArgumentException::class, $e);
                             continue;
                         }
                         self::fail(
                                 'InvalidArgumentException was expected when trying to increment a version by '
-                                . var_export($version, true)
+                                . var_export($increment, true)
                             );
                     }
                 }
@@ -233,12 +230,13 @@ class AssetsVersionManagerTest extends TestCase
         foreach ($this->supportedFileFormats as $format) {
             foreach ($this->templates[$format]['invalid'] as $templateName => $template) {
                 foreach ($this->validParameterNames as $parameterName) {
-                    $this->setTempFileContents($format, $parameterName, $template);
+                    $this->setTempFileContents($format, $template, $parameterName, 'some-version');
 
                     $filePath = $this->fileDir . '/' . $this->fileName . '.' . $format;
                     try {
                         $manager = new AssetsVersionManager($filePath, $parameterName);
                     } catch (\Exception $e) {
+                        self::assertInstanceOf(\Exception::class, $e);
                         continue;
                     }
                     self::fail(
@@ -262,6 +260,7 @@ class AssetsVersionManagerTest extends TestCase
                     try {
                         $manager = new AssetsVersionManager($filePath, $parameterName);
                      } catch (InvalidConfigurationException $e) {
+                         self::assertInstanceOf(InvalidConfigurationException::class, $e);
                          continue;
                      }
                     self::fail(
@@ -285,23 +284,24 @@ class AssetsVersionManagerTest extends TestCase
             $filePath = $this->fileDir . '/' . $this->fileName . '.' . $format;
             $manager = new AssetsVersionManager($filePath, $parameterName);
 
-            chmod($filePath, 000);
+            chmod($filePath, 0o000);
 
             try {
                 $manager->getVersion(true);
 
-                chmod($filePath, 777);
+                chmod($filePath, 0o644);
 
                 self::fail(sprintf(
                         'FileException was expected when rereading an unavailable file %s',
                         $filePath
                     ));
             } catch (FileException $e) {
+                self::assertInstanceOf(FileException::class, $e);
             }
 
             self::assertEquals($manager->getVersion(), 'some-version');
 
-            chmod($filePath, 777);
+            chmod($filePath, 0o644);
 
             self::assertEquals($manager->getVersion(true), 'some-version');
 
@@ -330,6 +330,7 @@ class AssetsVersionManagerTest extends TestCase
                         $filePath
                     ));
             } catch (FileException $e) {
+                self::assertInstanceOf(FileException::class, $e);
             }
 
             $this->setTempFileContents($format, $template, $parameterName, '42');
@@ -348,6 +349,7 @@ class AssetsVersionManagerTest extends TestCase
             try {
                 $manager = new AssetsVersionManager($filePath, $this->validParameterNames[0]);
             } catch (FileException $e) {
+                self::assertInstanceOf(FileException::class, $e);
                 continue;
             }
             self::fail(sprintf(
@@ -369,20 +371,49 @@ class AssetsVersionManagerTest extends TestCase
             $filePath = $this->fileDir . '/' . $this->fileName . '.' . $format;
             $manager = new AssetsVersionManager($filePath, $parameterName);
 
-            chmod($filePath, 000);
+            chmod($filePath, 0o000);
 
             try {
                 $manager->setVersion('some-other-value');
             } catch (FileException $e) {
-                chmod($filePath, 777);
+                chmod($filePath, 0o644);
+                self::assertInstanceOf(FileException::class, $e);
                 continue;
             }
-            chmod($filePath, 777);
+            chmod($filePath, 0o644);
 
             self::fail(sprintf(
                     'FileException was expected when writing an unavialble file %s',
                     $filePath
                 ));
+        }
+    }
+
+    /**
+     * Writing to a file that has been deleted in the meantime recreates it
+     * from the contents held in memory, rather than throwing.
+     */
+    public function testSetVersionRecreatesMissingFile(): void
+    {
+        foreach ($this->supportedFileFormats as $format) {
+            $templates = array_values($this->templates[$format]['valid']);
+            $template = $templates[0];
+            $parameterName = $this->validParameterNames[0];
+
+            $this->setTempFileContents($format, $template, $parameterName, 'v042');
+
+            $filePath = $this->fileDir . '/' . $this->fileName . '.' . $format;
+            $manager = new AssetsVersionManager($filePath, $parameterName);
+
+            unlink($filePath);
+
+            $manager->setVersion('v043');
+
+            self::assertFileExists($filePath);
+            self::assertStringContainsString(
+                $parameterName . ': v043',
+                $this->getTempFileContents($format)
+            );
         }
     }
 

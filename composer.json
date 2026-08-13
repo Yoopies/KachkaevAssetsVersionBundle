@@ -1,10 +1,9 @@
 {
 	"name" : "grizzlylab/assets-version-bundle",
 	"type" : "symfony-bundle",
-	"description" : "Automates the process of updating assets version in Symfony 5 projects still using parameters.yml",
+	"description" : "Automates the process of updating assets version in Symfony 5.4 and 6.x projects still using parameters.yml",
 	"keywords" : [
 		"assets",
-		"assetic",
 		"version",
 		"autoincrement",
 		"config",
@@ -29,23 +28,29 @@
 		}
 	],
 	"require" : {
-		"php" : "^7.4|^8.0",
-		"symfony/framework-bundle" : "^5.2"
+		"php" : ">=8.2",
+		"symfony/config" : "^5.4|^6.0",
+		"symfony/console" : "^5.4|^6.0",
+		"symfony/dependency-injection" : "^5.4|^6.0",
+		"symfony/framework-bundle" : "^5.4|^6.0",
+		"symfony/http-foundation" : "^5.4|^6.0",
+		"symfony/http-kernel" : "^5.4|^6.0",
+		"symfony/yaml" : "^5.4|^6.0"
 	},
 	"require-dev" : {
-		"symfony/filesystem" : "^5.2",
-		"symfony/finder" : "^5.2",
-		"phpunit/phpunit": "~9.4"
+		"symfony/filesystem" : "^5.4|^6.0",
+		"symfony/finder" : "^5.4|^6.0",
+		"phpunit/phpunit": "^9.6"
 	},
     "scripts": {
         "phpunit": "phpunit -c phpunit.xml.dist; exit 0"
     },
-	"suggest" : {
-		"symfony/assetic-bundle" : "For combining and compressing assets"
-	},
 	"autoload" : {
         "psr-4": {
             "Kachkaev\\AssetsVersionBundle\\": ""
-        }
+        },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
 	}
 }

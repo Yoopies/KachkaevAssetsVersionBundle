@@ -11,13 +11,13 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('assets_version');
+        $treeBuilder = new TreeBuilder('kachkaev_assets_version');
 
         $treeBuilder
             ->getRootNode()
             ->children()
                 ->scalarNode('file_path')
-                    ->defaultValue('%kernel.project_dir%/app/config/parameters.yml')
+                    ->defaultValue('%kernel.project_dir%/config/parameters.yml')
                     ->info('path to the file that contains the assets version parameter')
                     ->end()
                 ->scalarNode('parameter_name')
