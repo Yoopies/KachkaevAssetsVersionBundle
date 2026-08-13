@@ -173,7 +173,7 @@ bin/console assets-version:set 1970-01-01_0000
 bin/console assets-version:set abcDEF-something_else
 
 # Decrements assets version by 10 (e.g. was 0052, became 0042; was lorem.ipsum.0.15, became lorem.ipsum.0.5)
-# Note two dashes before the argument that prevent symfony from parsing -10 as an option name
+# Note two dashes before the argument that prevent Symfony from parsing -10 as an option name
 bin/console assets-version:increment -- -10
 
 # Decrementing version by a number bigger than current version results in 0 (e.g. was v0010, became v0000)
